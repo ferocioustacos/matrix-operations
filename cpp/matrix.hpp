@@ -26,23 +26,19 @@ struct Matrix {
 private:
     M_Type mat_;
 
-    [[nodiscard]]
     Matrix() {
 
     }
 
 public:
-    [[nodiscard]]
     Matrix(size_t N, size_t M) {
         resize(N, M);
     }
 
-    [[nodiscard]]
     Matrix(size_t N, size_t M, double defaultValue) {
         resize(N, M, defaultValue);
     }
 
-    [[nodiscard]]
     Matrix(const std::initializer_list<std::initializer_list<data_t>>& mat) 
         : n(mat.size()), m( mat.begin()->size() )
     {
@@ -63,7 +59,6 @@ public:
         }
     }
 
-    [[nodiscard]]
     Matrix(size_t N, size_t M, const std::initializer_list<data_t>& values) 
         : n(N), m(M)
     {
@@ -72,26 +67,24 @@ public:
         }
     }
 
-    [[nodiscard]]
     Matrix(size_t N, size_t M, const data_t& defaultValue, const std::initializer_list<data_t>& values) 
         : n(N), m(M)
     {
-        mat_ = M_Type();
-        mat_.resize(n);
+        access() = M_Type();
+        access().resize(n);
         const auto& V = values.begin();
         size_t v_idx = 0;
         for(size_t i = 0; i < n; i++) {
-            mat_[i].resize(m, defaultValue);
+            access(i).resize(m, defaultValue);
             for(size_t j = 0; j < m; j++) {
                 if(v_idx < values.size()) {
-                    mat_[i][j] = V[v_idx];
+                    store(i, j, V[v_idx]);
                     v_idx++;
                 }
             }
         }
     }
 
-    [[nodiscard]]
     Matrix(const data_t& factor, const std::initializer_list<std::initializer_list<data_t>>& mat) 
         : n(mat.size()), m( mat.begin()->size() )
     {
@@ -220,18 +213,18 @@ public:
     [[nodiscard]]
     data_t at(size_t i, size_t j) const {
         check_bounds(i, j);
-        return mat_[i][j];
+        return access(i, j);
     }
 
     [[nodiscard]]
     data_t& at(size_t i, size_t j) {
         check_bounds(i, j);
-        return mat_[i][j];
+        return access(i, j);
     }
 
     [[nodiscard]]
     Row getRow(size_t i) const {
-       return mat_[i]; 
+        return access(i);
     }
 
     void setRow(size_t i, const Row& row) {
@@ -239,14 +232,14 @@ public:
             throw std::invalid_argument("New row size does not match Matrix row size");
         }
 
-        mat_[i] = row;
+        store(i, row);
     }
     
     [[nodiscard]]
     Column getColumn(size_t j) const {
         Column col(n);
         for(size_t i = 0; i < n; i++) {
-            col[i] = mat_[i][j];
+            col[i] = access(i, j);
         }
 
         return col;
@@ -290,12 +283,12 @@ public:
     void resize(size_t N, size_t M, double defaultValue) {
         n = N;
         m = M;
-        if(mat_.size() == 0) {
-            mat_ = M_Type();
+        if(access().size() == 0) {
+            access() = M_Type();
         }
 
-        mat_.resize(n);
-        for(Row& r : mat_) {
+        access().resize(n);
+        for(Row& r : access()) {
             r.resize(m);
             for(auto& e : r) {
                 e = defaultValue;
@@ -353,12 +346,12 @@ public:
     }
 
     [[nodiscard]]
-    Matrix tensor(const Matrix& other) const {
-        return Matrix::tensor(*this, other);
+    Matrix Tensor(const Matrix& other) const {
+        return Matrix::Tensor(*this, other);
     }
 
     [[nodiscard]]
-    static Matrix tensor(const Matrix& A, const Matrix& B) {
+    static Matrix Tensor(const Matrix& A, const Matrix& B) {
         Matrix result = Matrix(A.n * B.n, A.m * B.m);
         for(size_t i = 0; i < A.n; i++) {
             for(size_t j = 0; j < A.m; j++) {
@@ -450,6 +443,10 @@ private:
 
     /* Matrix access functions */
 
+    M_Type& access() {
+        return mat_;
+    }
+
     data_t& access(size_t i, size_t j) {
         return mat_[i][j];
     }
@@ -458,10 +455,21 @@ private:
         return mat_[i][j];
     }
 
+    Row& access(size_t i) {
+        return mat_[i];
+    }
+
+    Row access(size_t i) const {
+        return mat_[i];
+    }
+
     void store(size_t i, size_t j, const data_t& z) {
         mat_[i][j] = z;
     }
 
+    void store(size_t i, const Row& r) {
+        mat_[i] = r;
+    }
     
 };
 
