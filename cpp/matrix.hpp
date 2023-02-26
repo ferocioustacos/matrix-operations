@@ -447,6 +447,22 @@ private:
             throw std::invalid_argument("Accessed beyond column");
         }
     }
+
+    /* Matrix access functions */
+
+    data_t& access(size_t i, size_t j) {
+        return mat_[i][j];
+    }
+    
+    data_t access(size_t i, size_t j) const {
+        return mat_[i][j];
+    }
+
+    void store(size_t i, size_t j, const data_t& z) {
+        mat_[i][j] = z;
+    }
+
+    
 };
 
 std::ostream& operator<<(std::ostream& os, const Matrix& Matrix) {
