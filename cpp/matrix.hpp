@@ -50,7 +50,7 @@ public:
             }
 
             for(const auto& e : r) {
-                at(i, j) = e;
+                store(i, j, e);
                 j++;
             }
 
@@ -70,12 +70,12 @@ public:
     Matrix(size_t N, size_t M, const data_t& defaultValue, const std::initializer_list<data_t>& values) 
         : n(N), m(M)
     {
-        access() = M_Type();
-        access().resize(n);
+        set_matrix(M_Type());
+        resize_matrix(n);
         const auto& V = values.begin();
         size_t v_idx = 0;
         for(size_t i = 0; i < n; i++) {
-            access(i).resize(m, defaultValue);
+            resize_row(i, m, defaultValue);
             for(size_t j = 0; j < m; j++) {
                 if(v_idx < values.size()) {
                     store(i, j, V[v_idx]);
@@ -96,7 +96,7 @@ public:
             }
 
             for(const auto& e : r) {
-                at(i, j) = e * factor;
+                store(i, j, e * factor);
                 j++;
             }
 
@@ -114,7 +114,7 @@ public:
         Matrix mat = Matrix(N, M);
         for(size_t i = 0; i < N; i++) {
             for(size_t j = 0; j < M; j++) {
-                mat.at(i, j) = R(device);
+                mat.store(i, j, R(device));
             }
         }
 
@@ -129,7 +129,7 @@ public:
         Matrix mat = Matrix(N, M);
         for(size_t i = 0; i < N; i++) {
             for(size_t j = 0; j < M; j++) {
-                mat.at(i, j) = R(device);
+                mat.store(i, j, R(device));
             }
         }
 
@@ -139,7 +139,7 @@ public:
     static Matrix diag(size_t N, double Diag[]) {
         Matrix D = Matrix(N, N);
         for(size_t i = 0; i < N; i++) {
-            D.at(i, i) = Diag[i];
+            D.store(i, i, Diag[i]);
         }
 
         return D;
@@ -156,11 +156,9 @@ public:
 
     [[nodiscard]]
     static Matrix Identity(size_t N) {
-        Matrix I = Matrix(N, N);
+        Matrix I = Matrix(N, N, 0);
         for(size_t i = 0; i < N; i++) {
-            for(size_t j = 0; j < N; j++) {
-                I.at(i, j) = (double) i == j;
-            }
+            I.store(i, j, 1);
         }
 
         return I;
@@ -168,11 +166,9 @@ public:
 
     [[nodiscard]]
     static Matrix IdentityLike(size_t N, size_t M) {
-        Matrix I = Matrix(N, M);
+        Matrix I = Matrix(N, M, 0);
         for(size_t i = 0; i < N; i++) {
-            for(size_t j = 0; j < M; j++) {
-                I.at(i, j) = (double) i == j;
-            }
+            I.store(i, j, 1);
         }
 
         return I;
@@ -181,7 +177,7 @@ public:
     [[nodiscard]]
     static Matrix Hadamard() {
         Matrix H = Matrix(2, 2, 1);
-        H.at(1, 1) = -1;
+        H.store(1, 1, -1);
         return H * (1 / sqrt(2));
     }
 
@@ -284,14 +280,14 @@ public:
         n = N;
         m = M;
         if(access().size() == 0) {
-            access() = M_Type();
+            set_matrix(M_Type());
         }
 
-        access().resize(n);
-        for(Row& r : access()) {
-            r.resize(m);
-            for(auto& e : r) {
-                e = defaultValue;
+        resize_matrix(n);
+        for(size_t i = 0; i < n; i++) {
+            resize_row(i, m);                
+            for(size_t j = 0; j < m; j++) {
+                store(i, j, defaultValue);
             }
         }
     }
@@ -442,6 +438,21 @@ private:
     }
 
     /* Matrix access functions */
+    void set_matrix(const M_Type& new_mat) {
+        mat_ = new_mat;
+    }
+
+    void resize_matrix(size_t N) {
+        mat_.resize(N);
+    }
+
+    void resize_row(size_t i, size_t M) {
+        mat_[i].resize(M);
+    }
+
+    void resize_row(size_t i, size_t M, const data_t& defaultValue) {
+        mat_[i].resize(M, defaultValue);
+    }
 
     M_Type& access() {
         return mat_;

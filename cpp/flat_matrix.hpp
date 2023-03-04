@@ -2,10 +2,97 @@
 
 struct FlatMatrix : Matrix {
     typedef std::vector<data_t> M_Type;
-    using Matrix::Matrix;
+    size_t n;
+    size_t m;
+
+
+    FlatMatrix(size_t N, size_t M) {
+        resize(N, M);
+    }
+
+    FlatMatrix(size_t N, size_t M, double defaultValue) {
+        resize(N, M, defaultValue);
+    }
+
+    FlatMatrix(const std::initializer_list<std::initializer_list<data_t>>& mat) 
+        : n(mat.size()), m( mat.begin()->size() )
+    {
+        resize(n, m);
+        size_t i = 0, j = 0;
+        for(const auto& r : mat) {
+            if(r.size() != m) {
+                throw std::invalid_argument("Matrix not of consistent size");
+            }
+
+            for(const auto& e : r) {
+                at(i, j) = e;
+                j++;
+            }
+
+            i++;
+            j = 0;
+        }
+    }
+
+    FlatMatrix(size_t N, size_t M, const std::initializer_list<data_t>& values) 
+        : n(N), m(M)
+    {
+        if(values.size() != N * M) {
+            throw std::invalid_argument("values param not sufficient to fill Matrix");
+        }
+    }
+
+    FlatMatrix(size_t N, size_t M, const data_t& defaultValue, const std::initializer_list<data_t>& values) 
+        : n(N), m(M)
+    {
+        set_matrix(M_Type());
+        resize_matrix(n * m);
+        const auto& V = values.begin();
+        size_t v_idx = 0;
+        for(size_t i = 0; i < n; i++) {
+            for(size_t j = 0; j < m; j++) {
+                if(v_idx < values.size()) {
+                    store(i, j, V[v_idx]);
+                    v_idx++;
+                }
+            }
+        }
+    }
+
+    FlatMatrix(const data_t& factor, const std::initializer_list<std::initializer_list<data_t>>& mat) 
+        : n(mat.size()), m( mat.begin()->size() )
+    {
+        resize(n, m);
+        size_t i = 0, j = 0;
+        for(const auto& r : mat) {
+            if(r.size() != m) {
+                throw std::invalid_argument("Matrix not of consistent size");
+            }
+
+            for(const auto& e : r) {
+                at(i, j) = e * factor;
+                j++;
+            }
+
+            i++;
+            j = 0;
+        }
+    }
+
 
 private:
     FlatMatrix::M_Type mat_;
+
+    void set_matrix(const M_Type& new_mat) {
+        mat_ = new_mat;
+    }
+
+    void resize_matrix(size_t N) {
+        mat_.resize(N);
+    }
+
+    void resize_row(size_t i, size_t M) =  delete;
+    void resize_row(size_t i, size_t M, const data_t& defaultValue) = delete;
 
     M_Type& access() {
         return mat_;
